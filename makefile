@@ -24,4 +24,4 @@ tidy:
 	$(CXX) $(CXXFLAGS) --compile $< -o $@
 
 clean:
-	rm -f *.o demo test clean
+	rm -f *.o demo test client server
