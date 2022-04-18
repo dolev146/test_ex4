@@ -1,20 +1,3 @@
-# all: main
-
-# main: main.o Stack.o
-# 	g++ main.o Stack.o -o main; ./main
-
-# main.o:main.cpp
-# 	g++ main.cpp -c -g -Wall
-
-# Stack.o: Stack.cpp 
-# 	g++ Stack.cpp -c 
-	
-# # g++ main.cpp
-# # g++ Stack.cpp Stack.hpp
-
-# clean:
-# 	rm -f Stack.o main.o
-
 CXX=g++ 
 CXXFLAGS=-Wall
 
@@ -33,9 +16,6 @@ client.o:client.cpp
 
 demo: main.o $(OBJECTS) 
 	$(CXX) $(CXXFLAGS) $^ -o demo
-
-# test: TestCounter.o Test.o $(OBJECTS)
-# 	$(CXX) $(CXXFLAGS) $^ -o test
 
 tidy:
 	clang-tidy $(SOURCES) -checks=bugprone-*,clang-analyzer-*,cppcoreguidelines-*,performance-*,portability-*,readability-* --warnings-as-errors=-* --
