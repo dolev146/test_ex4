@@ -23,7 +23,7 @@ namespace ex4
             this->next = NULL;
         };
     };
-
+    
     class Stack
     {
     public:

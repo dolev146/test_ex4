@@ -20,16 +20,22 @@ CXXFLAGS=-Wall
 
 HEADERS=Stack.hpp
 OBJECTS=Stack.o
-SOURCES=Stack.cpp
+SOURCES=Stack.cpp server.cpp client.cpp
 
-run: demo
+run: demo server.o client.o
 	./$^
 
-demo: main.o $(OBJECTS)
+server.o:server.cpp
+	$(CXX) $(CXXFLAGS) server.cpp -o server	
+
+client.o:client.cpp
+	$(CXX) $(CXXFLAGS) client.cpp -o client	
+
+demo: main.o $(OBJECTS) 
 	$(CXX) $(CXXFLAGS) $^ -o demo
 
-test: TestCounter.o Test.o $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o test
+# test: TestCounter.o Test.o $(OBJECTS)
+# 	$(CXX) $(CXXFLAGS) $^ -o test
 
 tidy:
 	clang-tidy $(SOURCES) -checks=bugprone-*,clang-analyzer-*,cppcoreguidelines-*,performance-*,portability-*,readability-* --warnings-as-errors=-* --

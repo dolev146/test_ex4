@@ -9,8 +9,8 @@ using namespace ex4;
 int main()
 {
     Stack *mystack = new Stack();
-    std::string a = "yakov is gay";
-    std::string b = "dolev is gay";
+    std::string a = "yakov is great";
+    std::string b = "dolev is great";
     mystack->push(a);
     mystack->push(b);
     std::string out = mystack->top();
