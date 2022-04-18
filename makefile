@@ -1,6 +1,6 @@
-CXX=g++ 
-CXXFLAGS=-Wall
-
+CXX=clang++
+CXXFLAGS=
+# -Wall -Werror -g
 HEADERS=Stack.hpp
 OBJECTS=Stack.o
 SOURCES=Stack.cpp server.cpp client.cpp
@@ -24,4 +24,4 @@ tidy:
 	$(CXX) $(CXXFLAGS) --compile $< -o $@
 
 clean:
-	rm -f *.o demo test
+	rm -f *.o demo test clean
