@@ -21,6 +21,8 @@
 using namespace ex4;
 #define PORT "9034" // Port we're listening on
 
+std::mutex m; // you can use std::lock_guard if you want to be exception safe
+
 // Get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -232,9 +234,11 @@ int main(void)
                             {
                                 if (strlen(buf) != 0)
                                 {
+                                    m.lock();
                                     std::string str_buff = std::string(buf);
                                     printf("from Client : %s", buf);
                                     my_stack->push(str_buff);
+                                    m.unlock();
                                 }
                             }
                         }

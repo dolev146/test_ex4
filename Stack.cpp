@@ -2,23 +2,30 @@
 
 namespace ex4
 {
+  
     std::string Stack::pop()
     {
+        
         std::string txt = this->head->txt;
         Node *temp = this->head;
         this->head = this->head->next;
         this->size--;
         delete temp;
+       
         return txt;
     }
     std::string Stack::top()
     {
+       
         return this->head->txt;
+      
     }
 
     void Stack::push(std::string &txt)
     {
-        std::cout << "in push: " << txt << std::endl;
+        
+        std::cout
+            << "in push: " << txt << std::endl;
         // std::cout <<  << std::endl;
         Node *n = new Node(txt);
         if (this->head == NULL)
@@ -31,6 +38,7 @@ namespace ex4
             this->head = n;
         }
         this->size++;
+  
         return;
     };
 
