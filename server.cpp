@@ -12,6 +12,10 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <errno.h>
+#include <sys/wait.h>
+#include <signal.h>
+
 #include "Stack.hpp"
 using namespace ex4;
 
@@ -24,34 +28,25 @@ void func(int connfd, Stack *mystack)
 {
 
     char buff[MAX];
-    // int n;
+
     // infinite loop for chat
     for (;;)
     {
         bzero(buff, MAX);
 
         // read the message from client and copy it in buffer
+
         read(connfd, buff, sizeof(buff));
+        // maybe replace with recv
+        if (!recv(connfd, buff, sizeof(buff), 0))
+        {
+            printf("Client diconnected\n");
+        }
+
         // print buffer which contains the client contents
         printf("From client: %s \n", buff);
         std::string to_push = std::string(buff);
         mystack->push(to_push);
-
-        // bzero(buff, MAX);
-        // n = 0;
-        // copy server message in the buffer
-        // while ((buff[n++] = getchar()) != '\n')
-        //     ;
-
-        // and send that buffer to client
-        // write(connfd, buff, sizeof(buff));
-
-        // if msg contains "Exit" then server exit and chat ended.
-        // if (strncmp("exit", buff, 4) == 0 || strncmp("EXIT", buff, 4) == 0 || (strncmp(buff, "LOCAL", 4)) == 0)
-        // {
-            // printf("Server Exit...\n");
-            // break;
-        // }
     }
 }
 
@@ -120,33 +115,6 @@ int main()
     func(connfd, my_stack);
     // After chatting close the socket
     close(sockfd);
-
-    // int isConnect = 1;
-    // while (true)
-    // {
-    //     if (isConnect)
-    //     {
-    //         addr_size = sizeof(client_addr);
-    //         client_sock = accept(sockfd, (SA *)&cli, &addr_size);
-    //         printf("[+]Client connected.\n");
-    //         isConnect = 0;
-    //     }
-
-    //     bzero(buffer, 1024);
-    //     if (!recv(client_sock, buffer, sizeof(buffer), 0))
-    //     {
-    //         close(client_sock);
-    //         isConnect = 1;
-    //     }
-    //     else
-    //     {
-    //         for (int i = 0; i < 1024; i++)
-    //         {
-    //             printf("%c", buffer[i]);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
 
     return 0;
 }
