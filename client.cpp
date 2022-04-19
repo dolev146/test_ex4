@@ -47,7 +47,7 @@ void func(int sockfd)
 	}
 }
 
-int client()
+int main()
 {
 
 	int sockfd, connfd;

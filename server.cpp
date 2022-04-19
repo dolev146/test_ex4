@@ -33,25 +33,25 @@ void func(int connfd, Stack *mystack)
         // read the message from client and copy it in buffer
         read(connfd, buff, sizeof(buff));
         // print buffer which contains the client contents
-        printf("From client: %s\t To client : ", buff);
+        printf("From client: %s \n", buff);
         std::string to_push = std::string(buff);
         mystack->push(to_push);
 
-        bzero(buff, MAX);
-        n = 0;
+        // bzero(buff, MAX);
+        // n = 0;
         // copy server message in the buffer
-        while ((buff[n++] = getchar()) != '\n')
-            ;
+        // while ((buff[n++] = getchar()) != '\n')
+        //     ;
 
         // and send that buffer to client
-        write(connfd, buff, sizeof(buff));
+        // write(connfd, buff, sizeof(buff));
 
         // if msg contains "Exit" then server exit and chat ended.
-        if (strncmp("exit", buff, 4) == 0 || strncmp("EXIT", buff, 4) == 0 || (strncmp(buff, "LOCAL", 4)) == 0)
-        {
-            printf("Server Exit...\n");
-            break;
-        }
+        // if (strncmp("exit", buff, 4) == 0 || strncmp("EXIT", buff, 4) == 0 || (strncmp(buff, "LOCAL", 4)) == 0)
+        // {
+            // printf("Server Exit...\n");
+            // break;
+        // }
     }
 }
 
