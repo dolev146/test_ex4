@@ -16,21 +16,22 @@ namespace ex4
         return this->head->txt;
     }
 
-    // void Stack::push(std::string &txt)
-    // {
-    //     std::cout << txt << std::endl;
-    //     Node *n = new Node(txt);
-    //     if (this->head == NULL)
-    //     {
-    //         this->head = n;
-    //     }
-    //     else
-    //     {
-    //         n->next = this->head;
-    //         this->head = n;
-    //     }
-    //     this->size++;
-    //     return;
-    // }
+    void Stack::push(std::string &txt)
+    {
+        std::cout << "in push: " << txt << std::endl;
+        // std::cout <<  << std::endl;
+        Node *n = new Node(txt);
+        if (this->head == NULL)
+        {
+            this->head = n;
+        }
+        else
+        {
+            n->next = this->head;
+            this->head = n;
+        }
+        this->size++;
+        return;
+    };
 
 }

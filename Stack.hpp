@@ -31,23 +31,8 @@ namespace ex4
         int size = 0;
         std::string pop();
         std::string top();
-        void push(std::string &txt)
-        {
-            std::cout << "in push: " << std::endl;
-            std::cout << txt << std::endl;
-            Node *n = new Node(txt);
-            if (this->head == NULL)
-            {
-                this->head = n;
-            }
-            else
-            {
-                n->next = this->head;
-                this->head = n;
-            }
-            this->size++;
-            return;
-        };
+        void push(std::string &txt);
+   
     };
 }
 #endif // HEADER_H

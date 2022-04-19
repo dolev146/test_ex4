@@ -8,8 +8,8 @@ SOURCES=Stack.cpp server.cpp client.cpp
 run: demo server.o client.o
 	./$^
 
-server.o:server.cpp
-	$(CXX) $(CXXFLAGS) server.cpp -o server	
+server.o:server.cpp Stack.o
+	$(CXX) $(CXXFLAGS) server.cpp Stack.o -o server	
 
 client.o:client.cpp
 	$(CXX) $(CXXFLAGS) client.cpp -o client	
