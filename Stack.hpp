@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string>
 #include <iostream>
-#include <pthread.h>
-#include "main.hpp"
 
 namespace ex4
 {
@@ -33,12 +31,8 @@ namespace ex4
         int size = 0;
         std::string pop();
         std::string top();
-
         void push(std::string &txt)
         {
-            pthread_mutex_init(&mutex, NULL);
-            pthread_mutex_lock(&mutex);
-            std::cout << "in push : ";
             std::cout << txt << std::endl;
             Node *n = new Node(txt);
             if (this->head == NULL)
@@ -51,8 +45,6 @@ namespace ex4
                 this->head = n;
             }
             this->size++;
-            pthread_mutex_unlock(&mutex);
-            pthread_mutex_destroy(&mutex);
             return;
         };
     };

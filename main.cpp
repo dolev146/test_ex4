@@ -6,14 +6,6 @@
 
 using namespace ex4;
 
-int child_pid = 0;
-
-void kill_child(int sig)
-{
-    std::cout << "child_ pid kii " << std::endl;
-    kill(child_pid, SIGKILL);
-}
-
 int main()
 {
     // Stack *mystack = new Stack();
@@ -28,13 +20,13 @@ int main()
     // out = mystack->pop();
     // std::cout << out << std::endl;
 
-    child_pid = fork();
-    if (child_pid == -1)
+    int pid = fork();
+    if (pid == -1)
     {
         return 1;
     }
     std::string param = "./server";
-    if (child_pid == 0)
+    if (pid == 0)
     {
         // child process
         char *args[] = {(char *)(param.c_str()), NULL};

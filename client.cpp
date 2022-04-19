@@ -37,9 +37,8 @@ void func(int sockfd)
 			;
 		write(sockfd, buff, sizeof(buff));
 		bzero(buff, sizeof(buff));
-		
-		// read(sockfd, buff, sizeof(buff));
-		// printf("From Server : %s\n", buff);
+		read(sockfd, buff, sizeof(buff));
+		printf("From Server : %s", buff);
 		// if ((strncmp(buff, "exit", 4)) == 0 || (strncmp(buff, "EXIT", 4)) == 0 || (strncmp(buff, "LOCAL", 4)) == 0)
 		// {
 		// 	printf("Client Exit...\n");

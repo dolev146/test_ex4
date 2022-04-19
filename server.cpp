@@ -1,6 +1,6 @@
 // https://www.geeksforgeeks.org/tcp-server-client-implementation-in-c/
 // https://www.geeksforgeeks.org/udp-server-client-implementation-c/
-#include <signal.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,19 +33,10 @@ void func(int connfd, Stack *mystack)
         // read the message from client and copy it in buffer
         read(connfd, buff, sizeof(buff));
         // print buffer which contains the client contents
-<<<<<<< HEAD
         printf("From client: %s \n", buff);
         std::string to_push = std::string(buff);
         mystack->push(to_push);
 
-=======
-        printf("From client: %s\n", buff);
-
-        std::string to_push = std::string(buff);
-        mystack->push(to_push);
-
-        // std::cout << "To client : " << std::endl;
->>>>>>> master
         // bzero(buff, MAX);
         // n = 0;
         // copy server message in the buffer
@@ -58,13 +49,8 @@ void func(int connfd, Stack *mystack)
         // if msg contains "Exit" then server exit and chat ended.
         // if (strncmp("exit", buff, 4) == 0 || strncmp("EXIT", buff, 4) == 0 || (strncmp(buff, "LOCAL", 4)) == 0)
         // {
-<<<<<<< HEAD
             // printf("Server Exit...\n");
             // break;
-=======
-        //     printf("Server Exit...\n");
-        //     break;
->>>>>>> master
         // }
     }
 }
@@ -72,7 +58,6 @@ void func(int connfd, Stack *mystack)
 // driver function
 int main()
 {
-    // pthread_mutex_init(&mutex, NULL);
     Stack *my_stack = new Stack();
 
     int sockfd;
@@ -134,7 +119,6 @@ int main()
     // Function for chatting between client and server
     func(connfd, my_stack);
     // After chatting close the socket
-    // pthread_mutex_destroy(&mutex);
     close(sockfd);
 
     // int isConnect = 1;
