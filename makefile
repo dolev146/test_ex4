@@ -1,5 +1,5 @@
-CXX=clang++
-CXXFLAGS=
+CXX=g++
+CXXFLAGS= -Wall -Werror -g
 # -Wall -Werror -g
 HEADERS=Stack.hpp
 OBJECTS=Stack.o

@@ -33,6 +33,7 @@ namespace ex4
         std::string top();
         void push(std::string &txt)
         {
+            std::cout << "in push: " << std::endl;
             std::cout << txt << std::endl;
             Node *n = new Node(txt);
             if (this->head == NULL)

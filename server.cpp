@@ -24,7 +24,7 @@ void func(int connfd, Stack *mystack)
 {
 
     char buff[MAX];
-    int n;
+    // int n;
     // infinite loop for chat
     for (;;)
     {
