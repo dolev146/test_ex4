@@ -20,13 +20,14 @@ int main()
     // out = mystack->pop();
     // std::cout << out << std::endl;
 
-    int pid = fork();
-    if (pid == -1)
+    int server_pid = fork();
+    
+    if (server_pid == -1)
     {
         return 1;
     }
     std::string param = "./server";
-    if (pid == 0)
+    if (server_pid == 0)
     {
         // child process
         char *args[] = {(char *)(param.c_str()), NULL};
