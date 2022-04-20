@@ -19,29 +19,32 @@
 #include <signal.h>
 #include <pthread.h>
 #include "Stack.hpp"
-
-struct param_args{
-    
-}
-
+#include <mutex>
 #define PORT "9034" // the port users will be connecting to
+#define BACKLOG 10  // how many pending connections queue will hold
+using namespace ex4;
 
-#define BACKLOG 10 // how many pending connections queue will hold
+class param_args
+{
+public:
+    int fd;
+    Stack *param_stack;
+};
 
 char buf[1024]; // Buffer for client data
 
-#include <mutex>
-
-using namespace ex4;
+std::mutex m;
 
 void *thread_controller(void *var)
 {
+
     int new_fd;
+    param_args *ptr = (param_args *)var;
+    new_fd = ptr->fd;
+    Stack my_stack = *ptr->param_stack;
     for (;;)
     {
 
-        int *ptr = (int *)var;
-        new_fd = *ptr;
         if (recv(new_fd, buf, sizeof buf, 0) == -1)
         {
             perror("recv");
@@ -49,9 +52,11 @@ void *thread_controller(void *var)
 
         if (strlen(buf) != 0)
         {
+            m.lock();
             printf("from client : %s", buf);
-
-
+            std::string str_buff = std::string(buf);
+            my_stack.push(str_buff);
+            m.unlock();
         }
     }
     close(new_fd);
@@ -172,8 +177,13 @@ int main(void)
                   s, sizeof s);
         printf("server: got connection from %s\n", s);
 
+        Stack *my_stack = new Stack();
+        param_args para;
+        para.fd = new_fd;
+        para.param_stack = my_stack;
+
         pthread_t t1; // we create here a thread to send the message
-        pthread_create(&t1, NULL, thread_controller, &new_fd);
+        pthread_create(&t1, NULL, thread_controller, &para);
         // pthread_join(t1, NULL);
     }
 

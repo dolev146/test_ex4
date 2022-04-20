@@ -8,7 +8,6 @@
 #include <iostream>
 #include <thread>
 
-
 namespace ex4
 {
 
@@ -34,6 +33,6 @@ namespace ex4
         std::string pop();
         std::string top();
         void push(std::string &txt);
-       };
+    };
 }
 #endif // HEADER_H
