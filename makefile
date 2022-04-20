@@ -9,7 +9,7 @@ run: demo server.o client.o
 	./$^
 
 server.o:server.cpp Stack.o
-	$(CXX) $(CXXFLAGS) server.cpp Stack.o -o server	
+	$(CXX) $(CXXFLAGS) server.cpp Stack.o -o server	-lpthread
 
 client.o:client.cpp
 	$(CXX) $(CXXFLAGS) client.cpp -o client	

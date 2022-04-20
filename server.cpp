@@ -19,41 +19,40 @@
 #include <signal.h>
 #include <pthread.h>
 #include "Stack.hpp"
+
+struct param_args{
+    
+}
+
+#define PORT "9034" // the port users will be connecting to
+
+#define BACKLOG 10 // how many pending connections queue will hold
+
+char buf[1024]; // Buffer for client data
+
 #include <mutex>
 
 using namespace ex4;
 
-struct arg_struct
+void *thread_controller(void *var)
 {
-    Stack *mystack;
-    void *fd;
-};
-
-#define PORT "9034" // the port users will be connecting to
-
-#define BACKLOG 30 // how many pending connections queue will hold
-
-char buf[1024]; // Buffer for client data
-std::mutex m;
-
-void *thread_controller(struct arg_struct *var_args)
-{
-
     int new_fd;
     for (;;)
     {
 
-        int *ptr = (int *)var_args->fd;
+        int *ptr = (int *)var;
         new_fd = *ptr;
         if (recv(new_fd, buf, sizeof buf, 0) == -1)
         {
             perror("recv");
         }
-        m.lock();
-        std::string str_buff = std::string(buf);
-        printf("from Client : %s", buf);
-        var_args->mystack->push(str_buff);
-        m.unlock();
+
+        if (strlen(buf) != 0)
+        {
+            printf("from client : %s", buf);
+
+
+        }
     }
     close(new_fd);
     return NULL;
@@ -85,7 +84,6 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {
-    Stack *my_stack = new Stack();
     int sockfd, new_fd; // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
@@ -173,16 +171,10 @@ int main(void)
                   get_in_addr((struct sockaddr *)&their_addr),
                   s, sizeof s);
         printf("server: got connection from %s\n", s);
-        arg_struct arg_paramters;
-        arg_paramters.mystack = my_stack;
-        arg_paramters.fd = &new_fd;
 
         pthread_t t1; // we create here a thread to send the message
-        if (t1 < 0)
-        {
-            pthread_create(&t1, NULL, thread_controller, &arg_paramters);
-            // pthread_join(t1, NULL);
-        }
+        pthread_create(&t1, NULL, thread_controller, &new_fd);
+        // pthread_join(t1, NULL);
     }
 
     return 0;
