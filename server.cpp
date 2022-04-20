@@ -1,29 +1,78 @@
 /*
-** pollserver.c -- a cheezy multiperson chat server
+** server.c -- a stream socket server demo
+*
+*   Thread version
+*
 */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <poll.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <pthread.h>
 #include "Stack.hpp"
-#include <string>
+#include <mutex>
 
 using namespace ex4;
-#define PORT "9034" // Port we're listening on
 
-std::mutex m; // you can use std::lock_guard if you want to be exception safe
+struct arg_struct
+{
+    Stack *mystack;
+    void *fd;
+};
 
-// Get sockaddr, IPv4 or IPv6:
+#define PORT "9034" // the port users will be connecting to
+
+#define BACKLOG 30 // how many pending connections queue will hold
+
+char buf[1024]; // Buffer for client data
+std::mutex m;
+
+void *thread_controller(struct arg_struct *var_args)
+{
+
+    int new_fd;
+    for (;;)
+    {
+
+        int *ptr = (int *)var_args->fd;
+        new_fd = *ptr;
+        if (recv(new_fd, buf, sizeof buf, 0) == -1)
+        {
+            perror("recv");
+        }
+        m.lock();
+        std::string str_buff = std::string(buf);
+        printf("from Client : %s", buf);
+        var_args->mystack->push(str_buff);
+        m.unlock();
+    }
+    close(new_fd);
+    return NULL;
+}
+
+void sigchld_handler(int s)
+{
+    (void)s; // quiet unused variable warning
+
+    // waitpid() might overwrite errno, so we save and restore it:
+    int saved_errno = errno;
+
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
+
+    errno = saved_errno;
+}
+
+// get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -34,219 +83,107 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-// Return a listening socket
-int get_listener_socket(void)
+int main(void)
 {
-    int listener; // Listening socket descriptor
-    int yes = 1;  // For setsockopt() SO_REUSEADDR, below
+    Stack *my_stack = new Stack();
+    int sockfd, new_fd; // listen on sock_fd, new connection on new_fd
+    struct addrinfo hints, *servinfo, *p;
+    struct sockaddr_storage their_addr; // connector's address information
+    socklen_t sin_size;
+    struct sigaction sa;
+    int yes = 1;
+    char s[INET6_ADDRSTRLEN];
     int rv;
 
-    struct addrinfo hints, *ai, *p;
-
-    // Get us a socket and bind it
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0)
+    hints.ai_flags = AI_PASSIVE; // use my IP
+
+    if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
     {
-        fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
-        exit(1);
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return 1;
     }
 
-    for (p = ai; p != NULL; p = p->ai_next)
+    // loop through all the results and bind to the first we can
+    for (p = servinfo; p != NULL; p = p->ai_next)
     {
-        listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (listener < 0)
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1)
         {
+            perror("server: socket");
             continue;
         }
 
-        // Lose the pesky "address already in use" error message
-        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-
-        if (bind(listener, p->ai_addr, p->ai_addrlen) < 0)
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                       sizeof(int)) == -1)
         {
-            close(listener);
+            perror("setsockopt");
+            exit(1);
+        }
+
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+        {
+            close(sockfd);
+            perror("server: bind");
             continue;
         }
 
         break;
     }
 
-    freeaddrinfo(ai); // All done with this
+    freeaddrinfo(servinfo); // all done with this structure
 
-    // If we got here, it means we didn't get bound
     if (p == NULL)
     {
-        return -1;
-    }
-
-    // Listen
-    if (listen(listener, 10) == -1)
-    {
-        return -1;
-    }
-
-    return listener;
-}
-
-// Add a new file descriptor to the set
-void add_to_pfds(struct pollfd *pfds[], int newfd, int *fd_count, int *fd_size)
-{
-    // If we don't have room, add more space in the pfds array
-    if (*fd_count == *fd_size)
-    {
-        *fd_size *= 2; // Double it
-
-        *pfds = (struct pollfd *)realloc(*pfds, sizeof(**pfds) * (*fd_size));
-    }
-
-    (*pfds)[*fd_count].fd = newfd;
-    (*pfds)[*fd_count].events = POLLIN; // Check ready-to-read
-
-    (*fd_count)++;
-}
-
-// Remove an index from the set
-void del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
-{
-    // Copy the one from the end over this one
-    pfds[i] = pfds[*fd_count - 1];
-
-    (*fd_count)--;
-}
-
-// Main
-int main(void)
-{
-    Stack *my_stack = new Stack();
-    int listener; // Listening socket descriptor
-
-    int newfd;                          // Newly accept()ed socket descriptor
-    struct sockaddr_storage remoteaddr; // Client address
-    socklen_t addrlen;
-
-    char buf[1024]; // Buffer for client data
-
-    char remoteIP[INET6_ADDRSTRLEN];
-
-    // Start off with room for 5 connections
-    // (We'll realloc as necessary)
-    int fd_count = 0;
-    int fd_size = 5;
-    struct pollfd *pfds = (struct pollfd *)malloc(sizeof *pfds * fd_size);
-
-    // Set up and get a listening socket
-    listener = get_listener_socket();
-
-    if (listener == -1)
-    {
-        fprintf(stderr, "error getting listening socket\n");
+        fprintf(stderr, "server: failed to bind\n");
         exit(1);
     }
 
-    // Add the listener to set
-    pfds[0].fd = listener;
-    pfds[0].events = POLLIN; // Report ready to read on incoming connection
-
-    fd_count = 1; // For the listener
-
-    // Main loop
-    for (;;)
+    if (listen(sockfd, BACKLOG) == -1)
     {
-        int poll_count = poll(pfds, fd_count, -1);
+        perror("listen");
+        exit(1);
+    }
 
-        if (poll_count == -1)
+    sa.sa_handler = sigchld_handler; // reap all dead processes
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        exit(1);
+    }
+
+    printf("server: waiting for connections...\n");
+
+    while (1)
+    {
+        // main accept() loop
+        sin_size = sizeof their_addr;
+        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+        if (new_fd == -1)
         {
-            perror("poll");
-            exit(1);
+            perror("accept ");
+            continue;
         }
 
-        // Run through the existing connections looking for data to read
-        for (int i = 0; i < fd_count; i++)
+        inet_ntop(their_addr.ss_family,
+                  get_in_addr((struct sockaddr *)&their_addr),
+                  s, sizeof s);
+        printf("server: got connection from %s\n", s);
+        arg_struct arg_paramters;
+        arg_paramters.mystack = my_stack;
+        arg_paramters.fd = &new_fd;
+
+        pthread_t t1; // we create here a thread to send the message
+        if (t1 < 0)
         {
-            // printf("i : %d\n", i);
-            // Check if someone's ready to read
-            if (pfds[i].revents & POLLIN)
-            { // We got one!!
-
-                if (pfds[i].fd == listener)
-                {
-                    // If listener is ready to read, handle new connection
-
-                    addrlen = sizeof(remoteaddr);
-                    newfd = accept(listener,
-                                   (struct sockaddr *)&remoteaddr,
-                                   &addrlen);
-
-                    if (newfd == -1)
-                    {
-                        perror("accept");
-                    }
-                    else
-                    {
-                        add_to_pfds(&pfds, newfd, &fd_count, &fd_size);
-
-                        printf("pollserver: new connection from %s on "
-                               "socket %d\n",
-                               inet_ntop(remoteaddr.ss_family,
-                                         get_in_addr((struct sockaddr *)&remoteaddr),
-                                         remoteIP, INET6_ADDRSTRLEN),
-                               newfd);
-                    }
-                }
-                else
-                {
-                    // If not the listener, we're just a regular client
-                    int nbytes = recv(pfds[i].fd, buf, sizeof buf, 0);
-
-                    int sender_fd = pfds[i].fd;
-
-                    if (nbytes <= 0)
-                    {
-                        // Got error or connection closed by client
-                        if (nbytes == 0)
-                        {
-                            // Connection closed
-                            printf("pollserver: socket %d hung up\n", sender_fd);
-                        }
-                        else
-                        {
-                            perror("recv");
-                        }
-
-                        close(pfds[i].fd); // Bye!
-
-                        del_from_pfds(pfds, i, &fd_count);
-                    }
-                    else
-                    {
-                        // We got some good data from a client
-
-                        for (int j = 0; j < fd_count; j++)
-                        {
-                            // Send to everyone!
-                            int dest_fd = pfds[j].fd;
-
-                            // Except the listener and ourselves
-                            if (dest_fd != listener && dest_fd != sender_fd)
-                            {
-                                if (strlen(buf) != 0)
-                                {
-                                    m.lock();
-                                    std::string str_buff = std::string(buf);
-                                    printf("from Client : %s", buf);
-                                    my_stack->push(str_buff);
-                                    m.unlock();
-                                }
-                            }
-                        }
-                    }
-                } // END handle data from client
-            }     // END got ready-to-read from poll()
-        }         // END looping through file descriptors
-    }             // END for(;;)--and you thought it would never end!
+            pthread_create(&t1, NULL, thread_controller, &arg_paramters);
+            // pthread_join(t1, NULL);
+        }
+    }
 
     return 0;
 }
