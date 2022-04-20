@@ -53,13 +53,33 @@ void *thread_controller(void *var)
         if (strlen(buf) != 0)
         {
             m.lock();
-            printf("from client : %s", buf);
-            std::string str_buff = std::string(buf);
-            my_stack.push(str_buff);
+            if (strncmp(buf, "PUSH", 4) == 0)
+            {
+                printf("from client : %s", buf);
+                std::string str_buff = std::string(buf);
+                my_stack.push(str_buff);
+            }
+            else if (strncmp(buf, "POP", 3) == 0)
+            {
+                printf("from client : %s \n", buf);
+                my_stack.pop();
+            }
+            else if (strncmp(buf, "TOP", 3) == 0)
+            {
+                printf("from client : %s \n", buf);
+                my_stack.top();
+            }
+            else if (strncmp(buf, "exit", 4) == 0 || strncmp(buf, "EXIT", 4) == 0)
+            {
+                printf("closed fd : %d \n", new_fd);
+                close(new_fd);
+                m.unlock();
+                return NULL;
+            }
             m.unlock();
         }
     }
-    close(new_fd);
+    // close(new_fd);
     return NULL;
 }
 
